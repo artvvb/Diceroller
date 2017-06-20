@@ -74,32 +74,38 @@ class mygame:
 		glutDisplayFunc(lambda: self.draw())
 		glutIdleFunc(lambda: self.time())
 		glutMouseFunc(lambda button, state, x, y: self.mouse(button, state, x, y))
-		glutPassiveMotionFunc(lambda x, y: self.mouse_passive(x, y))
+		glutPassiveMotionFunc(lambda x, y: self.mouse_motion(x, y))
+		glutMotionFunc(lambda x, y: self.mouse_motion(x, y))
 		glutKeyboardFunc(lambda key, x, y: self.keyboard(key, x, y))
 		glutReshapeFunc(lambda w, h: self.reshape(w, h))
 		
 	def reshape(self, w, h):
 		self.window_size.x = w
 		self.window_size.y = h
-		
-	def mouse_passive(self, x, y):
+	
+	def mouse_motion(self, x, y):
 		self.mouse_coord = coord.Coord(x=x,y=y)
 		self.mouse_coord *= coord.Coord(x=1.0,y=-1.0)
 		self.mouse_coord += coord.Coord(x=0,y=self.window_size.y-1)
 		self.mouse_coord /= self.window_size
 		
 		if self.objects[0].contains(self.mouse_coord):
-			self.objects[0].selected = True
+			self.objects[0].hover = True
 		else:
+			self.objects[0].hover = False
 			self.objects[0].selected = False
-			
+	
 	def mouse(self, button, state, x, y):
 		if button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
 			print("mouse: right press")
 		elif button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
 			print("mouse: left press")
+			if self.objects[0].contains(self.mouse_coord):
+				self.objects[0].selected = True
 		elif button == GLUT_LEFT_BUTTON and state == GLUT_UP:
 			print("mouse: left release")
+			if self.objects[0].contains(self.mouse_coord):
+				self.objects[0].selected = False
 			
 	def keyboard(self, key, x, y):
 		#print("key %x pressed" % key)
