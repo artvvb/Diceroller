@@ -88,6 +88,11 @@ class mygame:
 		self.mouse_coord += coord.Coord(x=0,y=self.window_size.y-1)
 		self.mouse_coord /= self.window_size
 		
+		if self.objects[0].contains(self.mouse_coord):
+			self.objects[0].selected = True
+		else:
+			self.objects[0].selected = False
+			
 	def mouse(self, button, state, x, y):
 		if button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
 			print("mouse: right press")
