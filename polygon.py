@@ -19,35 +19,93 @@ CONTAINMENT_OBJ = containment.BarycenterMethod()
 	
 class RegularPolygon:
 	def __init__(self, vertex_count, center, radius, rotation_rad, layer):
-		self.layer, self.center = layer, center
+		self.layer, self.center, self.vertex_count = layer, center, vertex_count
 		update = dummy_update
 		base_vertex = self.center + coord.Coord(x=radius, y=0.0)
 		base_vertex = rotate(base_vertex, self.center, rotation_rad)
 		rad_between_vertices = 2*math.pi / vertex_count
 		self.vertices = [rotate(base_vertex, self.center, x * rad_between_vertices) for x in range(vertex_count)]
-		self.triangles = [
-			[center for i in range(vertex_count)],
-			[self.vertices[i] for i in range(vertex_count)],
-			[self.vertices[(i+1)%6] for i in range(vertex_count)]
-		]
 		self.selected = False
 		self.hover = False
+		
 	def contains(self, c):
-		return CONTAINMENT_OBJ.any_triangles_contain(self.triangles[0], self.triangles[1], self.triangles[2], c)
+		return CONTAINMENT_OBJ.any_triangles_contain(self.triangles, c)
+		
 	def set_update(self, update):
 		self.update = update
+		
+	def rotate(self, rad):
+		self.vertices = [rotate(vertex, self.center, rad) for vertex in self.vertices]
+		
+	def move(self, vec):
+		self.center += vec
+		self.vertices = [vertex + vec for vertex in self.vertices]
+		
+class DrawMethod:
 	def draw(self):
-		glBegin(GL_POLYGON)
+		glBegin(self.gl_property)
+		for vertex in self.vertices: glVertex2f(vertex.x, vertex.y)
+		glEnd()
+		
+class TriangleStrip(DrawMethod):
+	def __init__(self, vertices):
+		self.vertices = vertices
+		self.gl_property = GL_TRIANGLE_STRIP
+	@property
+	def triangles(self):
+		i = 0
+		while i+2 < len(self.vertices):
+			yield self.vertices[i:i+3]
+			i += 1
+			
+class TriangleFan(DrawMethod):
+	def __init__(self, vertices):
+		self.vertices = vertices
+		self.gl_property = GL_TRIANGLE_FAN
+		
+	@property
+	def triangles(self):
+		i = 1
+		while i+1 < len(self.vertices):
+			yield [self.vertices[0], self.vertices[i], self.vertices[i+1]]
+			i += 1
+		
+class RegularHexagon(RegularPolygon):
+	@property
+	def triangle_strip(self):
+		return TriangleStrip([
+			self.vertices[1],
+			self.vertices[2],
+			self.vertices[0],
+			self.vertices[3],
+			self.vertices[5],
+			self.vertices[4]
+		])
+	@property
+	def triangle_fan(self):
+		return TriangleFan([
+			self.center,
+			self.vertices[0],
+			self.vertices[1],
+			self.vertices[2],
+			self.vertices[3],
+			self.vertices[4],
+			self.vertices[5],
+			self.vertices[0]
+		])
+	@property
+	def triangles(self):
+		return self.triangle_fan.triangles
+		
+	def draw(self):
 		if self.selected:
 			glColor3f(1.0,0.0,0.0)
 		elif self.hover:
 			glColor3f(0.0,0.0,1.0)
 		else:
 			glColor3f(1.0,1.0,1.0)
-		for vertex in self.vertices: glVertex2f(vertex.x, vertex.y)
-		glEnd()
-	def rotate(self, rad):
-		self.vertices = [rotate(vertex, self.center, rad) for vertex in self.vertices]
-	def move(self, vec):
-		self.center += vec
-		self.vertices = [vertex + vec for vertex in self.vertices]
+		self.triangle_fan.draw()
+
+if __name__ == "__main__":
+	for triangle in RegularHexagon(6, coord.Coord(x=0.0,y=0.0), 1.0, 0.0, 0).triangle_strip.triangles:
+		print(triangle)

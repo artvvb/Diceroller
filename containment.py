@@ -18,8 +18,8 @@ class TriangleContainment:
 class BarycenterMethod(TriangleContainment):
 	def __init__(self):
 		return
-	def _set_triangle(self, a, b, c):
-		self.a,self.b,self.c = a,b,c
+	def _set_triangle(self, t):
+		self.a,self.b,self.c = t[0],t[1],t[2]
 		self.v0 = self.c - self.a
 		self.v1 = self.b - self.a
 		self.dot00 = dot_product( self.v0, self.v0 )
@@ -35,35 +35,35 @@ class BarycenterMethod(TriangleContainment):
 		return (self.u >= 0) and (self.v >= 0) and (self.u + self.v < 1)
 	def _set_point(self, p):
 		self.p = p
-	def triangle_contains(self, a, b, c, p):
+	def triangle_contains(self, t, p):
 		self._set_point( p )
-		self._set_triangle( a, b, c )
+		self._set_triangle( t )
 		return self._triangle_containment()
-	def triangle_contains_any(self, a, b, c, L_p):
-		self._set_triangle( a, b, c )
+	def triangle_contains_any(self, t, L_p):
+		self._set_triangle( t )
 		for p in L_p:
-			self._set_point(p)
+			self._set_point( p )
 			if self._triangle_containment():
 				return True
 		return False
-	def triangle_contains_all(self, a, b, c, L_p):
-		self._set_triangle( a, b, c )
+	def triangle_contains_all(self, t, L_p):
+		self._set_triangle( t )
 		for p in L_p:
 			self._set_point(p)
 			if not self._triangle_containment():
 				return False
 		return True
-	def any_triangles_contain(self, L_a, L_b, L_c, p):
+	def any_triangles_contain(self, L_t, p):
 		self._set_point( p )
-		for i in range(len(L_a)):
-			self._set_triangle(L_a[i], L_b[i], L_c[i])
+		for t in L_t:
+			self._set_triangle( t )
 			if self._triangle_containment():
 				return True
 		return False
-	def all_triangles_contain(self, L_a, L_b, L_c, p):
+	def all_triangles_contain(self, L_t, p):
 		self._set_point( p )
-		for i in range(len(L_a)):
-			self._set_triangle(L_a[i], L_b[i], L_c[i])
+		for t in L_t:
+			self._set_triangle( t )
 			if not self._triangle_containment():
 				return False
 		return True
@@ -71,15 +71,15 @@ class BarycenterMethod(TriangleContainment):
 class AreaMethod(TriangleContainment):
 	def __init__(self):
 		return
-	def _compute_area(self, a, b, c):
-		temp = (a.x-c.x)*(b.y-a.x)-(a.x-b.x)*(c.y-a.y)
+	def _compute_area(self, t):
+		temp = (t[0].x-t[2].x)*(t[1].y-t[0].x)-(t[0].x-t[1].x)*(t[2].y-t[0].y)
 		if temp < 0: temp *= -1
 		return temp/2
-	def triangle_contains(self, a, b, c, p):
-		a0 = self._compute_area(a, b, c)
-		a1 = self._compute_area(a, b, p)
-		a2 = self._compute_area(a, p, c)
-		a3 = self._compute_area(p, b, c)
+	def triangle_contains(self, t, p):
+		a0 = self._compute_area( t )
+		a1 = self._compute_area( t )
+		a2 = self._compute_area( t )
+		a3 = self._compute_area( t )
 		return a0 == a1+a2+a3
 
 

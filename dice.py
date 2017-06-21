@@ -41,9 +41,11 @@ class mygame:
 		
 		self.mouseloc = None
 		self.wmouseloc = None
+		self.mouse_coord = None
 		
-		self.objects = [polygon.RegularPolygon(6, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
+		self.objects = [polygon.RegularHexagon(6, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
 		self.objects[0].set_update ( lambda obj: obj.rotate(1.0) )
+		self.mouse_callbacks = []
 		
 		self.lasttime = time.time()
 		self.elapsedtime = 0.0
@@ -61,7 +63,6 @@ class mygame:
 			self.elapsedtime -= 0.01
 			self.update()
 		self.draw()
-	
 	def init_window(self):
 		glutInit()
 		glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
@@ -84,17 +85,23 @@ class mygame:
 		self.window_size.y = h
 	
 	def mouse_motion(self, x, y):
+		mouse_last_coord = self.mouse_coord if self.mouse_coord else None
+		
 		self.mouse_coord = coord.Coord(x=x,y=y)
 		self.mouse_coord *= coord.Coord(x=1.0,y=-1.0)
 		self.mouse_coord += coord.Coord(x=0,y=self.window_size.y-1)
 		self.mouse_coord /= self.window_size
 		
+		if mouse_last_coord:
+			for func in self.mouse_callbacks:
+				func(self.mouse_coord - mouse_last_coord)
+	
 		if self.objects[0].contains(self.mouse_coord):
 			self.objects[0].hover = True
 		else:
 			self.objects[0].hover = False
 			self.objects[0].selected = False
-	
+			
 	def mouse(self, button, state, x, y):
 		if button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
 			print("mouse: right press")
@@ -102,10 +109,14 @@ class mygame:
 			print("mouse: left press")
 			if self.objects[0].contains(self.mouse_coord):
 				self.objects[0].selected = True
+				self.mouse_callbacks.append(lambda vec: self.objects[0].move(vec))
+				
 		elif button == GLUT_LEFT_BUTTON and state == GLUT_UP:
 			print("mouse: left release")
-			if self.objects[0].contains(self.mouse_coord):
-				self.objects[0].selected = False
+			#if self.objects[0].contains(self.mouse_coord):
+			self.objects[0].selected = False
+			if len(self.mouse_callbacks) > 0:
+				self.mouse_callbacks.pop()
 			
 	def keyboard(self, key, x, y):
 		#print("key %x pressed" % key)
