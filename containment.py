@@ -82,8 +82,51 @@ class AreaMethod(TriangleContainment):
 		a3 = self._compute_area( t )
 		return a0 == a1+a2+a3
 
+		
+class LineSegmentIntersection:
+	#Usage: use this class to stream a set of line segments to compare against a single one, or just compare two segments
+	def __init__(self):
+		return
+	def _set_L1(self, L1, setdenom = False):
+		self.x1 = L1[0].x
+		self.y1 = L1[0].y
+		self.x2 = L1[1].x
+		self.y2 = L1[1].y
+		self.numer_1 = (self.x1*self.y2-self.y1*self.x2)
+	def _set_L2(self, L2):
+		self.x3 = L2[0].x
+		self.y3 = L2[0].y
+		self.x4 = L2[1].x
+		self.y4 = L2[1].y
+		self.numer_2 = (self.x3*self.y4-self.y3*self.x4)
+	def _compute_intersection(self, fail_if_oob=False):
+		self.denom = ((self.x1-self.x2)*(self.y3-self.y4) - (self.y1-self.y2)*(self.x3-self.x4))
+		if self.denom == 0:
+			return None
+		else:
+			result = (
+				(self.numer_1*(self.x3-self.x4) - (self.x1-self.x2)*self.numer_2) / self.denom,
+				(self.numer_1*(self.y3-self.y4) - (self.y1-self.y2)*self.numer_2) / self.denom
+			)
+			if fail_if_oob: # return None if intersection is outside of either line segment's bounds
+				raise NotImplementedError()
+			else:
+				return result
+	def get_intersection(self, L1, L2):
+		self._set_L1(L1)
+		self._set_L2(L2)
+		return self._compute_intersection()
+	def get_intersections(self, L1, LL2):
+		self._set_L1(L1)
+		LI = []
+		for L2 in LL2:
+			self._set_L2(L2)
+			LI.append(self._compute_intersection())
+		return LI
+		
 
 if __name__ == "__main__":
+	"""
 	print("Benchmarking Available TriangleContainment Components:")
 	import datetime
 	L_t = []
@@ -105,4 +148,16 @@ if __name__ == "__main__":
 	
 	
 	#TODO: create a benchmark based on import random or project euler problem #102
-		
+	#"""
+	import coord
+	mysquare = [
+		(coord.Coord(x=0,y=0),coord.Coord(x=0,y=1)),
+		(coord.Coord(x=0,y=1),coord.Coord(x=1,y=1)),
+		(coord.Coord(x=1,y=1),coord.Coord(x=1,y=0)),
+		(coord.Coord(x=1,y=0),coord.Coord(x=0,y=0))
+	]
+	mysegment = (coord.Coord(x=-1,y=-1),coord.Coord(x=2,y=-1))
+	LS = LineSegmentIntersection()
+	results = LS.get_intersections(mysegment, mysquare)
+	for c in results:
+		print(c)

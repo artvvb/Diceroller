@@ -4,6 +4,7 @@ class PhysicsEntity:
 		self.velocity, self.position, self.acceleration = velocity, position, acceleration, 
 	def update(self):
 		if self.is_enabled:
+			# discrete function, should integrate over path
 			self.position += self.velocity
 			self.velocity += self.acceleration
 	def enable(self):
