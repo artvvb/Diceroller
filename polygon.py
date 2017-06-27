@@ -49,16 +49,38 @@ class ClickableObject():
 	def deselect(self):
 		self.selected = False
 		
-class DrawMethod:
+class DrawableObject:
 	def draw(self):
 		glBegin(self.gl_property)
-		for vertex in self.vertices: glVertex2f(vertex.x, vertex.y)
+		for vertex in self.drawable_vertices: glVertex2f(vertex.x, vertex.y)
 		glEnd()
 		
-class TriangleStrip(DrawMethod):
-	def __init__(self, vertices):
-		self.vertices = vertices
-		self.gl_property = GL_TRIANGLE_STRIP
+class TriangleStrip(DrawableObject):
+	@property
+	def drawable_vertices(self):
+		if len(self.vertices) != 6: raise NotImplementedError()
+		n = len(self.vertices)
+		evenorodd = n % 2
+		a1 = [self.vertices[(n-i)%n] for i in range(n // 2)]
+		a2 = [self.vertices[(i+1)%n] for i in range(n // 2 + evenorodd)]
+		a = []
+		for i in range(len(a1)):
+			a.append(a1[i])
+			a.append(a2[i])
+		if evenorodd == 1:
+			a.append(a2[:-1])
+		return a
+		#return [
+		#	self.vertices[0],
+		#	self.vertices[1],
+		#	self.vertices[5],
+		#	self.vertices[2],
+		#	self.vertices[4],
+		#	self.vertices[3]
+		#]
+	@property
+	def gl_property(self):
+		return GL_TRIANGLE_STRIP
 	@property
 	def triangles(self):
 		i = 0
@@ -66,11 +88,17 @@ class TriangleStrip(DrawMethod):
 			yield self.vertices[i:i+3]
 			i += 1
 			
-class TriangleFan(DrawMethod):
-	def __init__(self, vertices):
-		self.vertices = vertices
-		self.gl_property = GL_TRIANGLE_FAN
-		
+class TriangleFan(DrawableObject):
+	@property
+	def drawable_vertices(self):
+		a = [self.center]
+		for vertex in self.vertices:
+			a.append(vertex)
+		a.append(self.vertices[0])
+		return a
+	@property
+	def gl_property(self):
+		return GL_TRIANGLE_FAN
 	@property
 	def triangles(self):
 		i = 1
@@ -78,33 +106,15 @@ class TriangleFan(DrawMethod):
 			yield [self.vertices[0], self.vertices[i], self.vertices[i+1]]
 			i += 1
 		
-class RegularHexagon(RegularPolygon):
-	@property
-	def triangle_strip(self):
-		return TriangleStrip([
-			self.vertices[1],
-			self.vertices[2],
-			self.vertices[0],
-			self.vertices[3],
-			self.vertices[5],
-			self.vertices[4]
-		])
-	@property
-	def triangle_fan(self):
-		return TriangleFan([
-			self.center,
-			self.vertices[0],
-			self.vertices[1],
-			self.vertices[2],
-			self.vertices[3],
-			self.vertices[4],
-			self.vertices[5],
-			self.vertices[0]
-		])
-	@property
-	def triangles(self):
-		return self.triangle_fan.triangles
-		
+class RegularHexagon(RegularPolygon, TriangleFan):
+	def __init__(self, vertex_count, center, radius, rotation_rad, layer):
+		RegularPolygon.__init__(self, vertex_count, center, radius, rotation_rad, layer)
+		TriangleFan.__init__(self)
+
+class D6Entity(RegularHexagon, ClickableObject):
+	def __init__(self, vertex_count, center, radius, rotation_rad, layer):
+		RegularHexagon.__init__(self, vertex_count, center, radius, rotation_rad, layer)
+		ClickableObject.__init__(self)
 	def draw(self):
 		if self.selected:
 			glColor3f(1.0,0.0,0.0)
@@ -112,12 +122,7 @@ class RegularHexagon(RegularPolygon):
 			glColor3f(0.0,0.0,1.0)
 		else:
 			glColor3f(1.0,1.0,1.0)
-		self.triangle_fan.draw()
-
-class D6Entity(RegularHexagon, ClickableObject):
-	def __init__(self, vertex_count, center, radius, rotation_rad, layer):
-		RegularHexagon.__init__(self, vertex_count, center, radius, rotation_rad, layer)
-		ClickableObject.__init__(self)
+		TriangleFan.draw(self)
 		
 if __name__ == "__main__":
 	for triangle in RegularHexagon(6, coord.Coord(x=0.0,y=0.0), 1.0, 0.0, 0).triangle_strip.triangles:
