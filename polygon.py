@@ -25,8 +25,6 @@ class RegularPolygon:
 		base_vertex = rotate(base_vertex, self.center, rotation_rad)
 		rad_between_vertices = 2*math.pi / vertex_count
 		self.vertices = [rotate(base_vertex, self.center, x * rad_between_vertices) for x in range(vertex_count)]
-		self.selected = False
-		self.hover = False
 		
 	def contains(self, c):
 		return CONTAINMENT_OBJ.any_triangles_contain(self.triangles, c)
@@ -40,6 +38,16 @@ class RegularPolygon:
 	def move(self, vec):
 		self.center += vec
 		self.vertices = [vertex + vec for vertex in self.vertices]
+		
+class ClickableObject():
+	def __init__(self):
+		self.selected = False
+		self.hover = False
+	def select(self, new_center):
+		self.center = new_center
+		self.selected = True
+	def deselect(self):
+		self.selected = False
 		
 class DrawMethod:
 	def draw(self):
@@ -106,6 +114,11 @@ class RegularHexagon(RegularPolygon):
 			glColor3f(1.0,1.0,1.0)
 		self.triangle_fan.draw()
 
+class D6Entity(RegularHexagon, ClickableObject):
+	def __init__(self, vertex_count, center, radius, rotation_rad, layer):
+		RegularHexagon.__init__(self, vertex_count, center, radius, rotation_rad, layer)
+		ClickableObject.__init__(self)
+		
 if __name__ == "__main__":
 	for triangle in RegularHexagon(6, coord.Coord(x=0.0,y=0.0), 1.0, 0.0, 0).triangle_strip.triangles:
 		print(triangle)

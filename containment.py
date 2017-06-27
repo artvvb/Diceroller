@@ -82,7 +82,6 @@ class AreaMethod(TriangleContainment):
 		a3 = self._compute_area( t )
 		return a0 == a1+a2+a3
 
-		
 class LineSegmentIntersection:
 	#Usage: use this class to stream a set of line segments to compare against a single one, or just compare two segments
 	def __init__(self):
@@ -93,6 +92,7 @@ class LineSegmentIntersection:
 		self.x2 = L1[1].x
 		self.y2 = L1[1].y
 		self.numer_1 = (self.x1*self.y2-self.y1*self.x2)
+		
 	def _set_L2(self, L2):
 		self.x3 = L2[0].x
 		self.y3 = L2[0].y
@@ -104,11 +104,18 @@ class LineSegmentIntersection:
 		if self.denom == 0:
 			return None
 		else:
-			result = (
-				(self.numer_1*(self.x3-self.x4) - (self.x1-self.x2)*self.numer_2) / self.denom,
-				(self.numer_1*(self.y3-self.y4) - (self.y1-self.y2)*self.numer_2) / self.denom
+			result = coord.Coord(
+				x=(self.numer_1*(self.x3-self.x4) - (self.x1-self.x2)*self.numer_2) / self.denom,
+				y=(self.numer_1*(self.y3-self.y4) - (self.y1-self.y2)*self.numer_2) / self.denom
 			)
 			if fail_if_oob: # return None if intersection is outside of either line segment's bounds
+				if 	((result.x <= self.x1 and result.x >= self.x2) or (result.x <= self.x2 and result.x >= self.x1)) and \
+					((result.x <= self.x3 and result.x >= self.x4) or (result.x <= self.x4 and result.x >= self.x3)) and \
+					((result.y <= self.y1 and result.y >= self.y2) or (result.y <= self.y2 and result.y >= self.y1)) and \
+					((result.y <= self.y3 and result.y >= self.y4) or (result.y <= self.y4 and result.y >= self.y3)): #please god anything but this
+					return result
+				else:
+					return None
 				raise NotImplementedError()
 			else:
 				return result
@@ -121,9 +128,10 @@ class LineSegmentIntersection:
 		LI = []
 		for L2 in LL2:
 			self._set_L2(L2)
-			LI.append(self._compute_intersection())
+			i = self._compute_intersection(True)
+			if i:
+				LI.append(i)
 		return LI
-		
 
 if __name__ == "__main__":
 	"""
@@ -156,8 +164,9 @@ if __name__ == "__main__":
 		(coord.Coord(x=1,y=1),coord.Coord(x=1,y=0)),
 		(coord.Coord(x=1,y=0),coord.Coord(x=0,y=0))
 	]
-	mysegment = (coord.Coord(x=-1,y=-1),coord.Coord(x=2,y=-1))
+	mysegment = (coord.Coord(x=-1,y=-1),coord.Coord(x=1,y=1))
 	LS = LineSegmentIntersection()
 	results = LS.get_intersections(mysegment, mysquare)
 	for c in results:
 		print(c)
+	#"""

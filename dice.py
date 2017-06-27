@@ -6,7 +6,6 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import numpy
-from PIL import Image
 
 import coord
 import polygon
@@ -43,8 +42,8 @@ class mygame:
 		self.wmouseloc = None
 		self.mouse_coord = None
 		
-		self.objects = [polygon.RegularHexagon(6, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
-		self.objects[0].set_update ( lambda obj: obj.rotate(1.0) )
+		self.objects = [polygon.D6Entity(6, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
+		self.objects[0].set_update ( lambda obj: obj.rotate(0.025) )
 		self.mouse_callbacks = []
 		
 		self.lasttime = time.time()
@@ -53,6 +52,7 @@ class mygame:
 		
 	def update(self):
 		for obj in self.objects: obj.update(obj)
+		
 	def time(self):
 		thistime = time.time()
 		d = thistime - self.lasttime
@@ -100,7 +100,7 @@ class mygame:
 			self.objects[0].hover = True
 		else:
 			self.objects[0].hover = False
-			self.objects[0].selected = False
+			self.objects[0].deselect()
 			
 	def mouse(self, button, state, x, y):
 		if button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
@@ -108,13 +108,13 @@ class mygame:
 		elif button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
 			print("mouse: left press")
 			if self.objects[0].contains(self.mouse_coord):
-				self.objects[0].selected = True
+				self.objects[0].select(self.mouse_coord)
 				self.mouse_callbacks.append(lambda vec: self.objects[0].move(vec))
 				
 		elif button == GLUT_LEFT_BUTTON and state == GLUT_UP:
 			print("mouse: left release")
 			#if self.objects[0].contains(self.mouse_coord):
-			self.objects[0].selected = False
+			self.objects[0].deselect()
 			if len(self.mouse_callbacks) > 0:
 				self.mouse_callbacks.pop()
 			

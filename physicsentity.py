@@ -21,3 +21,11 @@ class CollisionMethod:
 	def check_collision(self, object1, object2):
 		# return point of impact (if any) and vector normal to collision
 		pass
+		
+class BoolCollisionMethod:
+	def __init__(self):
+		pass
+	def will_collide(self, object1, object2):
+		# an entity contains a bounding box described by a vertex list, 
+	def has_collided(self, object1, object2):
+		
