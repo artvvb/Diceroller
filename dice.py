@@ -8,7 +8,7 @@ from OpenGL.GLU import *
 import numpy
 
 import coord
-import polygon
+import dieentity
 import time
 import math
 
@@ -18,6 +18,8 @@ FULLSCREEN = False
 SHOWFPS=True
 GUI_LAYER=0
 GEO_LAYER=1
+USE_DRAG_MOVE = True
+USE_DRAG_ROTATE = False
 
 def refresh2d(vw, vh, width, height):
 	glViewport(0, 0, width, height)
@@ -42,8 +44,9 @@ class mygame:
 		self.wmouseloc = None
 		self.mouse_coord = None
 		
-		self.objects = [polygon.D6Entity(6, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
-		self.objects[0].set_update ( lambda obj: obj.rotate(0.025) )
+		self.objects = [dieentity.DieEntity(3, coord.Coord(x=0.5,y=0.5), 0.1, 0.0, GEO_LAYER)]
+		if not USE_DRAG_ROTATE:
+			self.objects[0].set_update ( lambda obj: obj.rotate(0.025) )
 		self.mouse_callbacks = []
 		
 		self.lasttime = time.time()
@@ -90,9 +93,9 @@ class mygame:
 		self.mouse_coord = coord.Coord(x=x,y=y)
 		self.mouse_coord *= coord.Coord(x=1.0,y=-1.0)
 		self.mouse_coord += coord.Coord(x=0,y=self.window_size.y-1)
-		self.mouse_coord /= self.window_size
+		self.mouse_coord /= self.window_size # mouse_coord is the pixel position on screen normalized into game-space
 		
-		if mouse_last_coord:
+		if mouse_last_coord and USE_DRAG_MOVE:
 			for func in self.mouse_callbacks:
 				func(self.mouse_coord - mouse_last_coord)
 	
